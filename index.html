@@ -13,7 +13,7 @@
         var height = 1000;
         var width = 1200;
         var canvas = (ctx = false);
-        var frameRate = 1 / 32;
+        var frameRate = 1 / 64;
         var frameDelay = frameRate * 1000;
         var loopTimer = false;
         var lastTime = false;
@@ -45,7 +45,7 @@
             mass: 25,
             length: l,
             theta: Math.PI / 2 - 0.05,
-            omega: 4,
+            omega: 2,
             alpha: 2,
             color: getRandomColor(),
             J: 0
@@ -96,11 +96,11 @@
           ctx.fillStyle = pendulum.color;
           // Draw pendulum
           ctx.beginPath();
-          ctx.arc(px, py, 24, 0, Math.PI * 2, false);
+          ctx.arc(px, py, 12, 0, Math.PI * 2, false);
           ctx.fill();
           ctx.closePath();
         }
-        const pendulums = generatePendulumArray(1000, 32, 4);
+        const pendulums = generatePendulumArray(540, 24, 24);
         var setup = function() {
           canvas = document.getElementById("canvas");
           canvas.width = 2400;
@@ -108,12 +108,12 @@
           canvas.style.width = "1200px";
           canvas.style.height = "800px";
           ctx = canvas.getContext("2d");
+          ctx.globalCompositeOperation = "screen"; // xor, screen, multiply
           scaleFactor = window.devicePixelRatio;
           ctx.scale(scaleFactor, scaleFactor);
           ctx.strokeStyle = "black";
           ctx.strokeWidth = "1";
           ctx.fillStyle = "tomato";
-          //   loopTimer = setInterval(loop, frameDelay);
           lastTime = new Date();
           requestAnimFrame(loop);
         };
@@ -132,7 +132,9 @@
           }
           deltaT = 0.01;
           time = new Date(timeMs);
-          //   ctx.rotate((0.02 * Math.PI) / 180);
+          ctx.translate(canvas.width / 4, canvas.height / 4);
+          ctx.rotate((.2 * Math.PI) / 180);
+          ctx.translate(-canvas.width / 4, -canvas.height / 4);
           ctx.clearRect(0, 0, width, height);
           pendulums.forEach(pendulum => {
             drawPendulum(pendulum, ctx, deltaT);
@@ -145,10 +147,6 @@
       document.addEventListener("DOMContentLoaded", go);
     </script>
     <style>
-      canvas {
-        /* width: 95%; */
-        /* height: 95%; */
-      }
       div#canvas-wrap {
         display: flex;
         justify-content: center;
