@@ -1,0 +1,162 @@
+<html>
+  <head>
+    <title>wave pendulum</title>
+  </head>
+  <style>
+    body {
+      background-color: #000000;
+    }
+  </style>
+  <body>
+    <script>
+      function go() {
+        var height = 1000;
+        var width = 1200;
+        var canvas = (ctx = false);
+        var frameRate = 1 / 32;
+        var frameDelay = frameRate * 1000;
+        var loopTimer = false;
+        var lastTime = false;
+
+        window.requestAnimFrame = (function() {
+          return (
+            window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            window.msRequestAnimationFrame ||
+            function(callback) {
+              window.setTimeout(callback, 1000 / 60);
+            }
+          );
+        })();
+
+        function getRandomColor() {
+          var letters = "0123456789ABCDEF";
+          var color = "#";
+          for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+          }
+          return color;
+        }
+
+        function generatePendulumArray(maxLength, numPendulums, numCycles) {
+          const generatePendulumWithLength = l => ({
+            mass: 25,
+            length: l,
+            theta: Math.PI / 2 - 0.05,
+            omega: 4,
+            alpha: 2,
+            color: getRandomColor(),
+            J: 0
+          });
+          const result = [];
+          for (let i = numPendulums - 1; i >= 0; i--) {
+            const thisPendulumLength =
+              maxLength * Math.pow(numCycles / (numCycles + i), 2);
+            result.push(generatePendulumWithLength(thisPendulumLength));
+          }
+          return result;
+        }
+
+        function drawPendulum(pendulum, ctx, deltaT) {
+          pendulum.J =
+            (pendulum.mass * pendulum.length * pendulum.length) / 500;
+          /* Velocity Verlet */
+          /* Calculate current position from last frame's position, velocity, and acceleration */
+          pendulum.theta +=
+            pendulum.omega * deltaT + 0.5 * pendulum.alpha * deltaT * deltaT;
+
+          /* Calculate forces from current position. */
+          var T =
+            pendulum.mass * 9.81 * Math.cos(pendulum.theta) * pendulum.length;
+
+          /* Current acceleration */
+          var alpha = T / pendulum.J;
+
+          /* Calculate current velocity from last frame's velocity and
+          average of last frame's acceleration with this frame's acceleration. */
+          pendulum.omega += 0.5 * (alpha + pendulum.alpha) * deltaT;
+
+          /* Update acceleration */
+          pendulum.alpha = alpha;
+
+          var px = width / 2 + pendulum.length * Math.cos(pendulum.theta);
+          var py = 50 + pendulum.length * Math.sin(pendulum.theta);
+
+          // Start drawing
+          // Draw bar for Pendulum
+        //   ctx.strokeStyle = "gold";
+        //   ctx.strokeWidth = 1;
+        //   ctx.beginPath();
+        //   ctx.moveTo(width / 2, 50);
+        //   ctx.lineTo(px, py);
+        //   ctx.stroke();
+        //   ctx.closePath();
+          ctx.fillStyle = pendulum.color;
+          // Draw pendulum
+          ctx.beginPath();
+          ctx.arc(px, py, 24, 0, Math.PI * 2, false);
+          ctx.fill();
+          ctx.closePath();
+        }
+        const pendulums = generatePendulumArray(1000, 32, 4);
+        var setup = function() {
+          canvas = document.getElementById("canvas");
+          canvas.width = 2400;
+          canvas.height = 1600;
+          canvas.style.width = "1200px";
+          canvas.style.height = "800px";
+          ctx = canvas.getContext("2d");
+          scaleFactor = window.devicePixelRatio;
+          ctx.scale(scaleFactor, scaleFactor);
+          ctx.strokeStyle = "black";
+          ctx.strokeWidth = "1";
+          ctx.fillStyle = "tomato";
+          //   loopTimer = setInterval(loop, frameDelay);
+          lastTime = new Date();
+          requestAnimFrame(loop);
+        };
+        var loop = function() {
+          var timeMs = new Date().getTime();
+          var deltaT = (timeMs - lastTime.getTime()) / 1000;
+
+          /*
+      When switching away from the window,
+      requestAnimationFrame is paused. Switching back
+      will give us a giant deltaT and cause an explosion.
+      We make sure that the biggest possible deltaT is 50 ms
+      */
+          if (deltaT > 0.05) {
+            deltaT = 0.05;
+          }
+          deltaT = 0.01;
+          time = new Date(timeMs);
+          //   ctx.rotate((0.02 * Math.PI) / 180);
+          ctx.clearRect(0, 0, width, height);
+          pendulums.forEach(pendulum => {
+            drawPendulum(pendulum, ctx, deltaT);
+          });
+          lastTime = new Date();
+          requestAnimFrame(loop);
+        };
+        setup();
+      }
+      document.addEventListener("DOMContentLoaded", go);
+    </script>
+    <style>
+      canvas {
+        /* width: 95%; */
+        /* height: 95%; */
+      }
+      div#canvas-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    </style>
+    <div id="canvas-wrap">
+      <canvas id="canvas" height="1600" width="2400"></canvas>
+    </div>
+  </body>
+</html>
