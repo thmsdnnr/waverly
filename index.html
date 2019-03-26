@@ -12,98 +12,122 @@
       /*
         Pendulum code heavily derived from: https://burakkanber.com/blog/physics-in-javascript-rigid-bodies-part-1-pendulum-clock/
       */
-      function go() {
-        var height = 1000;
-        var width = 1200;
-        var canvas = (ctx = false);
-        var frameRate = 1 / 64;
-        var frameDelay = frameRate * 1000;
-        var loopTimer = false;
-        var lastTime = false;
-
-        window.requestAnimFrame = (function() {
-          return (
-            window.requestAnimationFrame ||
-            window.webkitRequestAnimationFrame ||
-            window.mozRequestAnimationFrame ||
-            window.oRequestAnimationFrame ||
-            window.msRequestAnimationFrame ||
-            function(callback) {
-              window.setTimeout(callback, 1000 / 60);
-            }
+      var height = 1000;
+      var width = 1200;
+      var canvas = (ctx = false);
+      var frameRate = 1 / 64;
+      var frameDelay = frameRate * 1000;
+      const cosLookup = {},
+        sinLookup = {};
+      const memoCos = angle => {
+        if (!cosLookup[angle]) {
+          cosLookup[angle] = Math.cos(angle);
+        }
+        return cosLookup[angle];
+      };
+      const memoSin = angle => {
+        if (!sinLookup[angle]) {
+          sinLookup[angle] = Math.sin(angle);
+        }
+        return sinLookup[angle];
+      };
+      var pendulums = generatePendulumArray(540, 24, 24);
+      var loop;
+      function getRandomColor() {
+        var letters = "0123456789ABCDEF";
+        var color = "#";
+        for (var i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+      }
+      function generatePendulumArray(
+        maxLength,
+        numPendulums,
+        numCycles,
+        pendulumParams
+      ) {
+        const generatePendulumWithLength = l => {
+          const newParams = Object.assign(
+            {
+              mass: 25,
+              cordLength: l,
+              theta: Math.PI / 2 - 0.05,
+              omega: 2,
+              alpha: 2,
+              color: getRandomColor(),
+              J: 0
+            },
+            pendulumParams
           );
-        })();
-
-        function getRandomColor() {
-          var letters = "0123456789ABCDEF";
-          var color = "#";
-          for (var i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
-          }
-          return color;
+          return new Pendulum(newParams);
+        };
+        const result = [];
+        for (let i = numPendulums - 1; i >= 0; i--) {
+          const thisPendulumLength =
+            maxLength * Math.pow(numCycles / (numCycles + i), 2);
+          result.push(generatePendulumWithLength(thisPendulumLength));
         }
+        return result;
+      }
+      function Pendulum(params) {
+        const {
+          mass,
+          cordLength,
+          theta,
+          omega,
+          alpha,
+          color,
+          J,
+          showCords
+        } = params;
+        this.mass = typeof mass !== "undefined" ? mass : 25;
+        this.cordLength = typeof cordLength !== "undefined" ? cordLength : 0;
+        this.alpha = typeof alpha !== "undefined" ? alpha : 2;
+        this.theta = typeof theta !== "undefined" ? theta : Math.PI / 2 - 0.05;
+        this.omega = typeof omega !== "undefined" ? omega : 2;
+        this.showCords = typeof showCords !== "undefined" ? showCords : true;
+        this.color = typeof color !== "undefined" ? color : "tomato";
+      }
+      Pendulum.prototype.drawSelf = function(ctx, deltaT) {
+        this.J = (this.mass * this.cordLength * this.cordLength) / 500;
+        /* Velocity Verlet */
+        /* Calculate current position from last frame's position, velocity, and acceleration */
+        this.theta += this.omega * deltaT + 0.5 * this.alpha * deltaT * deltaT;
 
-        function generatePendulumArray(maxLength, numPendulums, numCycles) {
-          const generatePendulumWithLength = l => ({
-            mass: 25,
-            length: l,
-            theta: Math.PI / 2 - 0.05,
-            omega: 2,
-            alpha: 2,
-            color: getRandomColor(),
-            J: 0
-          });
-          const result = [];
-          for (let i = numPendulums - 1; i >= 0; i--) {
-            const thisPendulumLength =
-              maxLength * Math.pow(numCycles / (numCycles + i), 2);
-            result.push(generatePendulumWithLength(thisPendulumLength));
-          }
-          return result;
-        }
+        /* Calculate forces from current position. */
+        var T = this.mass * 9.81 * memoCos(this.theta) * this.cordLength;
 
-        function drawPendulum(pendulum, ctx, deltaT) {
-          pendulum.J =
-            (pendulum.mass * pendulum.length * pendulum.length) / 500;
-          /* Velocity Verlet */
-          /* Calculate current position from last frame's position, velocity, and acceleration */
-          pendulum.theta +=
-            pendulum.omega * deltaT + 0.5 * pendulum.alpha * deltaT * deltaT;
+        /* Current acceleration */
+        var alpha = T / this.J;
 
-          /* Calculate forces from current position. */
-          var T =
-            pendulum.mass * 9.81 * Math.cos(pendulum.theta) * pendulum.length;
-
-          /* Current acceleration */
-          var alpha = T / pendulum.J;
-
-          /* Calculate current velocity from last frame's velocity and
+        /* Calculate current velocity from last frame's velocity and
           average of last frame's acceleration with this frame's acceleration. */
-          pendulum.omega += 0.5 * (alpha + pendulum.alpha) * deltaT;
+        this.omega += 0.5 * (alpha + this.alpha) * deltaT;
 
-          /* Update acceleration */
-          pendulum.alpha = alpha;
+        /* Update acceleration */
+        this.alpha = alpha;
 
-          var px = width / 2 + pendulum.length * Math.cos(pendulum.theta);
-          var py = 50 + pendulum.length * Math.sin(pendulum.theta);
-
-          // Start drawing
-          // Draw bar for Pendulum
-          // ctx.strokeStyle = "gold";
-          // ctx.strokeWidth = 1;
-          // ctx.beginPath();
-          // ctx.moveTo(width / 2, 50);
-          // ctx.lineTo(px, py);
-          // ctx.stroke();
-          // ctx.closePath();
-          // ctx.fillStyle = pendulum.color;
-          // Draw pendulum
+        var px = width / 2 + this.cordLength * memoCos(this.theta);
+        var py = 50 + this.cordLength * memoSin(this.theta);
+        if (this.showCords) {
+          ctx.strokeStyle = "gold";
+          ctx.strokeWidth = 1;
           ctx.beginPath();
-          ctx.arc(px, py, 12, 0, Math.PI * 2, false);
-          ctx.fill();
+          ctx.moveTo(width / 2, 50);
+          ctx.lineTo(px, py);
+          ctx.stroke();
           ctx.closePath();
         }
-        const pendulums = generatePendulumArray(540, 24, 24);
+        ctx.fillStyle = this.color;
+        // Draw pendulum
+        ctx.beginPath();
+        ctx.arc(px, py, 12, 0, Math.PI * 2, false);
+        ctx.fill();
+        ctx.closePath();
+      };
+      function go() {
+        attachListeners();
         var setup = function() {
           canvas = document.getElementById("canvas");
           canvas.width = 2400;
@@ -117,35 +141,41 @@
           ctx.strokeStyle = "black";
           ctx.strokeWidth = "1";
           ctx.fillStyle = "tomato";
-          lastTime = new Date();
-          requestAnimFrame(loop);
+          window.requestAnimationFrame(loop);
         };
-        var loop = function() {
-          var timeMs = new Date().getTime();
-          var deltaT = (timeMs - lastTime.getTime()) / 1000;
-
-          /*
-      When switching away from the window,
-      requestAnimationFrame is paused. Switching back
-      will give us a giant deltaT and cause an explosion.
-      We make sure that the biggest possible deltaT is 50 ms
-      */
-          if (deltaT > 0.05) {
-            deltaT = 0.05;
-          }
+        loop = function() {
           deltaT = 0.01;
-          time = new Date(timeMs);
           ctx.translate(canvas.width / 4, canvas.height / 4);
-          // ctx.rotate((.2 * Math.PI) / 180);
+          // ctx.rotate((.2 * Math.PI) / 180); // rotate canvas at slow rate
           ctx.translate(-canvas.width / 4, -canvas.height / 4);
           ctx.clearRect(0, 0, width, height);
           pendulums.forEach(pendulum => {
-            drawPendulum(pendulum, ctx, deltaT);
+            pendulum.drawSelf(ctx, deltaT);
           });
-          lastTime = new Date();
-          requestAnimFrame(loop);
+          requestAnimationFrame(loop);
         };
         setup();
+        function attachListeners() {
+          const resetBtn = document.getElementById("reset");
+          resetBtn.addEventListener("click", function(ev) {
+            const nPen = Number(document.getElementById("num_pendulums").value);
+            const nCyc = Number(document.getElementById("num_cycles").value);
+            const vCords = Boolean(
+              document.getElementById("show_cords").checked
+            );
+            const a = Number(document.getElementById("alpha").value);
+            const t = Number(document.getElementById("theta").value);
+            const o = Number(document.getElementById("omega").value);
+            const m = Number(document.getElementById("mass").value);
+            pendulums = generatePendulumArray(540, nPen, nCyc, {
+              alpha: a,
+              theta: t,
+              omega: o,
+              mass: m,
+              showCords: vCords
+            });
+          });
+        }
       }
       document.addEventListener("DOMContentLoaded", go);
     </script>
@@ -156,15 +186,78 @@
         align-items: center;
       }
       div#control-box {
-        width: 400px;
-        height: 100px;
+        position: fixed;
+        top: 0px;
+        right: 0px;
+        width: 300px;
+        height: auto;
+        color: #ffffff;
+        font-family: "Courier New", Courier, monospace;
+        background-color: #cccccc33;
+        padding: 16px;
       }
     </style>
     <div id="canvas-wrap">
       <canvas id="canvas" height="1600" width="2400"></canvas>
     </div>
     <div id="control-box">
-
+      <label for="num_pendulums"># of pendulums</label
+      ><input
+        type="number"
+        id="num_pendulums"
+        min="1"
+        step="1"
+        placeholder="24"
+        value="24"
+      /><br />
+      <label for="num_cycles"># of cycles</label
+      ><input
+        type="number"
+        id="num_cycles"
+        min="1"
+        step="1"
+        placeholder="24"
+        value="24"
+      /><br />
+      <label for="alpha">alpha</label
+      ><input
+        type="alpha"
+        id="alpha"
+        min="1"
+        step="1"
+        placeholder="2"
+        value="2"
+      /><br />
+      <label for="theta">theta</label
+      ><input
+        type="number"
+        id="theta"
+        min="1"
+        step="0.01"
+        placeholder="1.52"
+        value="1.52"
+      /><br />
+      <label for="omega">omega</label
+      ><input
+        type="number"
+        id="omega"
+        min="1"
+        step="1"
+        placeholder="2"
+        value="2"
+      /><br />
+      <label for="mass">mass</label
+      ><input
+        type="number"
+        id="mass"
+        min="1"
+        step="1"
+        placeholder="25"
+        value="25"
+      /><br />
+      <label for="show_cords">show pendulum cords</label>
+      <input type="checkbox" id="show_cords" checked />
+      <button id="reset">RESET</button>
     </div>
   </body>
 </html>
