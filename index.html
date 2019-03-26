@@ -96,7 +96,7 @@
           // ctx.lineTo(px, py);
           // ctx.stroke();
           // ctx.closePath();
-          ctx.fillStyle = pendulum.color;
+          // ctx.fillStyle = pendulum.color;
           // Draw pendulum
           ctx.beginPath();
           ctx.arc(px, py, 12, 0, Math.PI * 2, false);
@@ -136,7 +136,7 @@
           deltaT = 0.01;
           time = new Date(timeMs);
           ctx.translate(canvas.width / 4, canvas.height / 4);
-          ctx.rotate((.2 * Math.PI) / 180);
+          // ctx.rotate((.2 * Math.PI) / 180);
           ctx.translate(-canvas.width / 4, -canvas.height / 4);
           ctx.clearRect(0, 0, width, height);
           pendulums.forEach(pendulum => {
@@ -155,9 +155,16 @@
         justify-content: center;
         align-items: center;
       }
+      div#control-box {
+        width: 400px;
+        height: 100px;
+      }
     </style>
     <div id="canvas-wrap">
       <canvas id="canvas" height="1600" width="2400"></canvas>
+    </div>
+    <div id="control-box">
+
     </div>
   </body>
 </html>
