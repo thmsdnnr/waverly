@@ -9,6 +9,9 @@
   </style>
   <body>
     <script>
+      /*
+        Pendulum code heavily derived from: https://burakkanber.com/blog/physics-in-javascript-rigid-bodies-part-1-pendulum-clock/
+      */
       function go() {
         var height = 1000;
         var width = 1200;
@@ -86,13 +89,13 @@
 
           // Start drawing
           // Draw bar for Pendulum
-        //   ctx.strokeStyle = "gold";
-        //   ctx.strokeWidth = 1;
-        //   ctx.beginPath();
-        //   ctx.moveTo(width / 2, 50);
-        //   ctx.lineTo(px, py);
-        //   ctx.stroke();
-        //   ctx.closePath();
+          // ctx.strokeStyle = "gold";
+          // ctx.strokeWidth = 1;
+          // ctx.beginPath();
+          // ctx.moveTo(width / 2, 50);
+          // ctx.lineTo(px, py);
+          // ctx.stroke();
+          // ctx.closePath();
           ctx.fillStyle = pendulum.color;
           // Draw pendulum
           ctx.beginPath();
