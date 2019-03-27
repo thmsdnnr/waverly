@@ -18,20 +18,6 @@
       var canvas = (ctx = false);
       var frameRate = 1 / 64;
       var frameDelay = frameRate * 1000;
-      const cosLookup = {},
-        sinLookup = {};
-      const memoCos = angle => {
-        if (!cosLookup[angle]) {
-          cosLookup[angle] = Math.cos(angle);
-        }
-        return cosLookup[angle];
-      };
-      const memoSin = angle => {
-        if (!sinLookup[angle]) {
-          sinLookup[angle] = Math.sin(angle);
-        }
-        return sinLookup[angle];
-      };
       var pendulums = generatePendulumArray(540, 24, 24);
       var loop;
       function generatePendulumArray(
@@ -89,7 +75,7 @@
         this.theta += this.omega * deltaT + 0.5 * this.alpha * deltaT * deltaT;
 
         /* Calculate forces from current position. */
-        var T = this.mass * 9.81 * memoCos(this.theta) * this.cordLength;
+        var T = this.mass * 9.81 * Math.cos(this.theta) * this.cordLength;
 
         /* Current acceleration */
         var alpha = T / this.J;
@@ -101,8 +87,8 @@
         /* Update acceleration */
         this.alpha = alpha;
 
-        var px = width / 2 + this.cordLength * memoCos(this.theta);
-        var py = 50 + this.cordLength * memoSin(this.theta);
+        var px = width / 2 + this.cordLength * Math.cos(this.theta);
+        var py = 50 + this.cordLength * Math.sin(this.theta);
         if (this.showCords) {
           ctx.strokeStyle = "gold";
           ctx.strokeWidth = 1;
