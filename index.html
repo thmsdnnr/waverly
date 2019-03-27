@@ -33,14 +33,6 @@
       };
       var pendulums = generatePendulumArray(540, 24, 24);
       var loop;
-      function getRandomColor() {
-        var letters = "0123456789ABCDEF";
-        var color = "#";
-        for (var i = 0; i < 6; i++) {
-          color += letters[Math.floor(Math.random() * 16)];
-        }
-        return color;
-      }
       function generatePendulumArray(
         maxLength,
         numPendulums,
@@ -55,7 +47,7 @@
               theta: Math.PI / 2 - 0.05,
               omega: 2,
               alpha: 2,
-              color: getRandomColor(),
+              color: "goldenrod",
               J: 0
             },
             pendulumParams
@@ -87,7 +79,7 @@
         this.theta = typeof theta !== "undefined" ? theta : Math.PI / 2 - 0.05;
         this.omega = typeof omega !== "undefined" ? omega : 2;
         this.showCords = typeof showCords !== "undefined" ? showCords : true;
-        this.color = typeof color !== "undefined" ? color : "tomato";
+        this.color = typeof color !== "undefined" ? color : "goldenrod";
       }
       Pendulum.prototype.drawSelf = function(ctx, deltaT) {
         this.J = (this.mass * this.cordLength * this.cordLength) / 500;
@@ -166,12 +158,10 @@
             const a = Number(document.getElementById("alpha").value);
             const t = Number(document.getElementById("theta").value);
             const o = Number(document.getElementById("omega").value);
-            const m = Number(document.getElementById("mass").value);
             pendulums = generatePendulumArray(540, nPen, nCyc, {
               alpha: a,
               theta: t,
               omega: o,
-              mass: m,
               showCords: vCords
             });
           });
@@ -201,8 +191,8 @@
       <canvas id="canvas" height="1600" width="2400"></canvas>
     </div>
     <div id="control-box">
-      <label for="num_pendulums"># of pendulums</label
-      > <input
+      <label for="num_pendulums"># of pendulums</label>
+      <input
         type="number"
         id="num_pendulums"
         min="1"
@@ -210,8 +200,8 @@
         placeholder="24"
         value="24"
       /><br />
-      <label for="num_cycles"># of cycles</label
-      > <input
+      <label for="num_cycles"># of cycles</label>
+      <input
         type="number"
         id="num_cycles"
         min="1"
@@ -219,8 +209,8 @@
         placeholder="24"
         value="24"
       /><br />
-      <label for="alpha">alpha</label
-      > <input
+      <label for="alpha">alpha</label>
+      <input
         type="alpha"
         id="alpha"
         min="1"
@@ -228,8 +218,8 @@
         placeholder="2"
         value="2"
       /><br />
-      <label for="theta">theta</label
-      > <input
+      <label for="theta">theta</label>
+      <input
         type="number"
         id="theta"
         min="1"
@@ -237,23 +227,14 @@
         placeholder="1.52"
         value="1.52"
       /><br />
-      <label for="omega">omega</label
-      > <input
+      <label for="omega">omega</label>
+      <input
         type="number"
         id="omega"
         min="1"
         step="1"
         placeholder="2"
         value="2"
-      /><br />
-      <label for="mass">mass</label
-      > <input
-        type="number"
-        id="mass"
-        min="1"
-        step="1"
-        placeholder="25"
-        value="25"
       /><br />
       <label for="show_cords">show pendulum cords</label>
       <input type="checkbox" id="show_cords" checked />
